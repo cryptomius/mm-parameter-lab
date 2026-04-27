@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { api } from "../api/rest";
 import { useSessionStore } from "../state/sessionStore";
 
@@ -39,14 +40,17 @@ export function InterventionToggles() {
   const patchLocal = useSessionStore((s) => s.patchInterventionLocal);
   const setState = useSessionStore((s) => s.setState);
   const running = useSessionStore((s) => s.state.running);
+  const [hovered, setHovered] = useState<string | null>(null);
+  const info = NAMES.find((n) => n.name === hovered);
   return (
     <div className="panel p-3">
       <div className="label mb-2">Interventions</div>
       {NAMES.map((it) => (
         <label
           key={it.name}
-          className="flex items-center justify-between text-xs py-1 cursor-help"
-          title={it.tooltip}
+          className="flex items-center justify-between text-xs py-1 cursor-pointer"
+          onMouseEnter={() => setHovered(it.name)}
+          onFocus={() => setHovered(it.name)}
         >
           <span>{it.label}</span>
           <input
@@ -67,6 +71,15 @@ export function InterventionToggles() {
           />
         </label>
       ))}
+      <div className="mt-2 p-2 bg-bg/60 border border-border rounded text-[10px] text-sub leading-snug min-h-[44px]">
+        {info ? (
+          <>
+            <span className="text-ink font-semibold">{info.label}.</span> {info.tooltip}
+          </>
+        ) : (
+          <span className="italic">Hover an intervention to see what it does.</span>
+        )}
+      </div>
     </div>
   );
 }

@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { api } from "../api/rest";
 import { useSessionStore } from "../state/sessionStore";
 
@@ -42,6 +43,8 @@ const EVENTS = [
 export function ScenarioPanel() {
   const events = useSessionStore((s) => s.events);
   const running = useSessionStore((s) => s.state.running);
+  const [hovered, setHovered] = useState<string | null>(null);
+  const info = EVENTS.find((e) => e.kind === hovered);
   return (
     <div className="panel p-3">
       <div className="label mb-2">Inject Scenario</div>
@@ -51,12 +54,22 @@ export function ScenarioPanel() {
             key={ev.kind}
             className="btn text-left disabled:opacity-40"
             disabled={!running}
-            title={ev.tooltip}
+            onMouseEnter={() => setHovered(ev.kind)}
+            onFocus={() => setHovered(ev.kind)}
             onClick={() => api.inject(ev.kind, ev.params)}
           >
             {ev.label}
           </button>
         ))}
+      </div>
+      <div className="mt-2 p-2 bg-bg/60 border border-border rounded text-[10px] text-sub leading-snug min-h-[44px]">
+        {info ? (
+          <>
+            <span className="text-ink font-semibold">{info.label}.</span> {info.tooltip}
+          </>
+        ) : (
+          <span className="italic">Hover a scenario to see what it injects.</span>
+        )}
       </div>
       <div className="label mt-3 mb-1">Recent events</div>
       <div className="text-[10px] font-mono max-h-40 overflow-y-auto space-y-0.5">
@@ -71,7 +84,6 @@ export function ScenarioPanel() {
               </div>
             );
           }
-          // intervention
           const det = e.details ?? {};
           const summary =
             e.action === "hedge_fill"

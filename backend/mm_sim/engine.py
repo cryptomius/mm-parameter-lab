@@ -80,6 +80,8 @@ class QuoteRecord:
     ask_price: float
     reservation_price: float
     half_spread: float
+    inv_risk_term: float
+    rent_term: float
     inventory: float
     sigma_est: float
     interventions_active: list[str]
@@ -529,6 +531,8 @@ class Engine:
                 ask_price=quote.ask_price,
                 reservation_price=quote.reservation_price,
                 half_spread=quote.half_spread,
+                inv_risk_term=quote.inv_risk_term,
+                rent_term=quote.rent_term,
                 inventory=self.pnl.inventory,
                 sigma_est=sigma_est,
                 interventions_active=active,
@@ -546,6 +550,8 @@ class Engine:
                 ask_price=float("nan"),
                 reservation_price=mid,
                 half_spread=float("nan"),
+                inv_risk_term=float("nan"),
+                rent_term=float("nan"),
                 inventory=self.pnl.inventory,
                 sigma_est=sigma_est,
                 interventions_active=why + ["pulled"],

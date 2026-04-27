@@ -10,6 +10,10 @@ export interface ChartTick {
   spread_pnl: number;
   inventory_pnl: number;
   sigma_est: number;
+  reservation_price: number;
+  half_spread: number;
+  inv_risk_term: number;
+  rent_term: number;
   active_interventions: string[];
 }
 

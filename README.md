@@ -19,8 +19,14 @@ The screenshot above is the running app at `http://localhost:5173/` against
   row) and a market-trades tape (▲ buy aggressor, ▼ sell aggressor, time
   in MM:SS.ms of sim time).
 - **Center** — Price & 5-second OHLC volume candles
-  (TradingView lightweight-charts), inventory area, and PnL decomposition
-  lines (uPlot canvas). The `view all` toggle in the
+  (TradingView lightweight-charts), inventory area, PnL decomposition
+  lines, and two AS-internals panels that expose the quoter's
+  formula directly: **MM Quoted Bid/Ask vs Mid** (the gap = the applied
+  half-spread, post-cap and post-intervention) and **Half-Spread
+  Composition** (the two AS terms — `rent = (1/γ)·ln(1+γ/k)` on a
+  left axis, `inv_risk = γ·σ²·τ/2` on an independent right axis so
+  vol-driven changes stay visible even when rent dominates by orders
+  of magnitude). All uPlot canvas. The `view all` toggle in the
   header keeps up to 60 minutes of history instead of the default 6.
 - **Right** — live numeric metrics, the three quoter knobs
   (γ, k, τ — Hit 'enter' or tab/click out to apply), the five interventions

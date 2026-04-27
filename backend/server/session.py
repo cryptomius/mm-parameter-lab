@@ -12,6 +12,7 @@ means real-time, `0` means as-fast-as-possible.
 from __future__ import annotations
 
 import asyncio
+import math
 import threading
 import time
 from dataclasses import dataclass, field
@@ -204,6 +205,8 @@ class Session:
             if engine.sim_t - last_quote_emit >= 0.1:
                 book_mid = engine.book.mid()
                 ref_mid = book_mid if book_mid is not None else engine.process.price
+                last_qr = engine.quote_records[-1] if engine.quote_records else None
+                _f = lambda x: None if x is None or math.isnan(x) else x  # noqa: E731
                 self._publish(
                     "quote_update",
                     {
@@ -215,6 +218,10 @@ class Session:
                         "spread_pnl": engine.pnl.realised_spread_pnl,
                         "inventory_pnl": engine.pnl.unrealised_pnl,
                         "sigma_est": engine.vol.sigma,
+                        "reservation_price": _f(last_qr.reservation_price if last_qr else None),
+                        "half_spread": _f(last_qr.half_spread if last_qr else None),
+                        "inv_risk_term": _f(last_qr.inv_risk_term if last_qr else None),
+                        "rent_term": _f(last_qr.rent_term if last_qr else None),
                         "active_interventions": [
                             n
                             for n in (

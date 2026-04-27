@@ -68,6 +68,8 @@ def write_results(
             "ask_price": [_safe(q.ask_price) for q in result.quotes],
             "reservation_price": [_safe(q.reservation_price) for q in result.quotes],
             "half_spread": [_safe(q.half_spread) for q in result.quotes],
+            "inv_risk_term": [_safe(q.inv_risk_term) for q in result.quotes],
+            "rent_term": [_safe(q.rent_term) for q in result.quotes],
             "inventory": [q.inventory for q in result.quotes],
             "sigma_est": [q.sigma_est for q in result.quotes],
             "interventions_active": [",".join(q.interventions_active) for q in result.quotes],

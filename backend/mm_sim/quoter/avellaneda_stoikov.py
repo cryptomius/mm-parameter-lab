@@ -20,6 +20,8 @@ class Quote:
     ask_price: float
     reservation_price: float
     half_spread: float
+    inv_risk_term: float
+    rent_term: float
 
 
 class AvellanedaStoikov:
@@ -64,4 +66,6 @@ class AvellanedaStoikov:
             ask_price=reservation + half_spread,
             reservation_price=reservation,
             half_spread=half_spread,
+            inv_risk_term=inv_risk_term,
+            rent_term=rent_term,
         )

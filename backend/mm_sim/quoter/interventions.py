@@ -52,6 +52,8 @@ def adaptive_spread(quote: Quote, ctx: InterventionContext, sigma_now: float) ->
         ask_price=quote.reservation_price + new_half,
         reservation_price=quote.reservation_price,
         half_spread=new_half,
+        inv_risk_term=quote.inv_risk_term,
+        rent_term=quote.rent_term,
     )
 
 
@@ -104,6 +106,8 @@ def per_counterparty_penalty(
         ask_price=quote.reservation_price + new_half,
         reservation_price=quote.reservation_price,
         half_spread=new_half,
+        inv_risk_term=quote.inv_risk_term,
+        rent_term=quote.rent_term,
     )
 
 

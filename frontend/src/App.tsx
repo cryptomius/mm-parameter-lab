@@ -8,7 +8,9 @@ import { OrderBookLadder } from "./components/OrderBookLadder";
 import { ParameterPanel } from "./components/ParameterPanel";
 import { PnLChart } from "./components/PnLChart";
 import { PriceVolumeChart } from "./components/PriceVolumeChart";
+import { ReservationChart } from "./components/ReservationChart";
 import { ScenarioPanel } from "./components/ScenarioPanel";
+import { SpreadCompositionChart } from "./components/SpreadCompositionChart";
 import { TradesTape } from "./components/TradesTape";
 import { useChartStore } from "./state/chartStore";
 import { useSessionStore } from "./state/sessionStore";
@@ -124,6 +126,12 @@ export default function App() {
           </div>
           <div className="flex-1 min-h-0">
             <PnLChart />
+          </div>
+          <div className="flex-1 min-h-0">
+            <ReservationChart />
+          </div>
+          <div className="flex-1 min-h-0">
+            <SpreadCompositionChart />
           </div>
         </section>
         <section className="col-span-3 flex flex-col gap-3 min-h-0 overflow-y-auto">

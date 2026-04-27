@@ -40,7 +40,8 @@ function flush(): void {
 
 function handle(msg: WsMessage): void {
   if (msg.kind === "quote_update") {
-    const p = msg.payload as Record<string, number | string[]>;
+    const p = msg.payload as Record<string, number | string[] | null>;
+    const num = (v: unknown) => (v == null ? NaN : Number(v));
     pendingTicks.push({
       t: Number(p.t),
       mid: Number(p.mid),
@@ -50,6 +51,10 @@ function handle(msg: WsMessage): void {
       spread_pnl: Number(p.spread_pnl),
       inventory_pnl: Number(p.inventory_pnl),
       sigma_est: Number(p.sigma_est),
+      reservation_price: num(p.reservation_price),
+      half_spread: num(p.half_spread),
+      inv_risk_term: num(p.inv_risk_term),
+      rent_term: num(p.rent_term),
       active_interventions: (p.active_interventions as string[]) ?? [],
     });
   } else if (msg.kind === "snapshot") {

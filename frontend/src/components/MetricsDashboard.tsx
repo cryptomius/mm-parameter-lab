@@ -1,16 +1,22 @@
+import { memo } from "react";
+import { useChartStore } from "../state/chartStore";
 import { useSessionStore } from "../state/sessionStore";
 
-export function MetricsDashboard() {
-  const state = useSessionStore((s) => s.state);
-  const ticks = useSessionStore((s) => s.ticks);
-  const last = ticks[ticks.length - 1];
+function MetricsDashboardImpl() {
+  const last = useChartStore((s) => (s.ticks.length ? s.ticks[s.ticks.length - 1] : null));
+  const fallbackT = useSessionStore((s) => s.state.sim_t ?? 0);
+  const fallbackTotal = useSessionStore((s) => s.state.total_pnl ?? 0);
+  const fallbackSpread = useSessionStore((s) => s.state.spread_pnl ?? 0);
+  const fallbackInv = useSessionStore((s) => s.state.inventory ?? 0);
+  const fallbackInvPnl = useSessionStore((s) => s.state.inventory_pnl ?? 0);
+  const fallbackSigma = useSessionStore((s) => s.state.sigma_est ?? 0);
 
-  const total = last?.total_pnl ?? state.total_pnl ?? 0;
-  const spread = last?.spread_pnl ?? state.spread_pnl ?? 0;
-  const inv = last?.inventory_pnl ?? state.inventory_pnl ?? 0;
-  const inventory = last?.inventory ?? state.inventory ?? 0;
-  const sigma = last?.sigma_est ?? state.sigma_est ?? 0;
-  const t = last?.t ?? state.sim_t ?? 0;
+  const total = last?.total_pnl ?? fallbackTotal;
+  const spread = last?.spread_pnl ?? fallbackSpread;
+  const inv = last?.inventory_pnl ?? fallbackInvPnl;
+  const inventory = last?.inventory ?? fallbackInv;
+  const sigma = last?.sigma_est ?? fallbackSigma;
+  const t = last?.t ?? fallbackT;
 
   return (
     <div className="panel p-3">
@@ -34,3 +40,5 @@ function Stat({ label, value, highlight }: { label: string; value: string; highl
     </div>
   );
 }
+
+export const MetricsDashboard = memo(MetricsDashboardImpl);

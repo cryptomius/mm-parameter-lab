@@ -1,15 +1,10 @@
 import { create } from "zustand";
-import type { Experiment, L2Snapshot, SessionState } from "../types/messages";
+import type { Experiment, InterventionEventPayload, ScenarioEventPayload, SessionState } from "../types/messages";
 
-interface QuoteTick {
-  t: number;
-  inventory: number;
-  total_pnl: number;
-  spread_pnl: number;
-  inventory_pnl: number;
-  sigma_est: number;
-  active_interventions: string[];
-}
+export type EventLogEntry = (
+  | ({ category: "scenario" } & ScenarioEventPayload)
+  | ({ category: "intervention" } & InterventionEventPayload)
+) & { id: number };
 
 interface Store {
   experiments: Experiment[];
@@ -17,14 +12,16 @@ interface Store {
   setSelected: (id: string) => void;
   state: SessionState;
   setState: (s: SessionState) => void;
-  ticks: QuoteTick[];
-  pushTick: (t: QuoteTick) => void;
-  snapshot: L2Snapshot | null;
-  setSnapshot: (s: L2Snapshot) => void;
+  patchInterventionLocal: (name: string, enabled: boolean) => void;
+  events: EventLogEntry[];
+  pushEvent: (e: ScenarioEventPayload) => void;
+  pushIntervention: (e: InterventionEventPayload) => void;
+  resetEvents: () => void;
   loadExperiments: () => Promise<void>;
 }
 
-const MAX_TICKS = 600; // ~ last 1 min at 10Hz
+const MAX_EVENTS = 50;
+let _eventSeq = 0;
 
 export const useSessionStore = create<Store>((set, get) => ({
   experiments: [],
@@ -32,14 +29,33 @@ export const useSessionStore = create<Store>((set, get) => ({
   setSelected: (id) => set({ selectedId: id }),
   state: { running: false },
   setState: (s) => set({ state: s }),
-  ticks: [],
-  pushTick: (t) => {
-    const arr = [...get().ticks, t];
-    if (arr.length > MAX_TICKS) arr.splice(0, arr.length - MAX_TICKS);
-    set({ ticks: arr });
+  patchInterventionLocal: (name, enabled) =>
+    set((st) => ({
+      state: {
+        ...st.state,
+        interventions: { ...(st.state.interventions ?? {}), [name]: enabled },
+      },
+    })),
+  events: [],
+  pushEvent: (e) => {
+    _eventSeq += 1;
+    const arr: EventLogEntry[] = [
+      { category: "scenario", ...e, id: _eventSeq },
+      ...get().events,
+    ];
+    if (arr.length > MAX_EVENTS) arr.length = MAX_EVENTS;
+    set({ events: arr });
   },
-  snapshot: null,
-  setSnapshot: (s) => set({ snapshot: s }),
+  pushIntervention: (e) => {
+    _eventSeq += 1;
+    const arr: EventLogEntry[] = [
+      { category: "intervention", ...e, id: _eventSeq },
+      ...get().events,
+    ];
+    if (arr.length > MAX_EVENTS) arr.length = MAX_EVENTS;
+    set({ events: arr });
+  },
+  resetEvents: () => set({ events: [] }),
   loadExperiments: async () => {
     const r = await fetch("/api/experiments");
     const xs = (await r.json()) as Experiment[];

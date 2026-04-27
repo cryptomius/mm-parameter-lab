@@ -151,6 +151,9 @@ async def get_state() -> dict[str, Any]:
 
 @app.websocket("/ws")
 async def websocket_endpoint(ws: WebSocket) -> None:
+    from mm_sim.logging_config import get_logger
+
+    log = get_logger("ws")
     await ws.accept()
     if not SESSION:
         await ws.send_json({"error": "no session running"})
@@ -160,7 +163,17 @@ async def websocket_endpoint(ws: WebSocket) -> None:
     try:
         while True:
             msg = await q.get()
-            await ws.send_text(msg.model_dump_json())
+            try:
+                payload = msg.model_dump_json()
+            except Exception as e:
+                log.error("ws.dump_failed", kind=msg.kind, err=str(e))
+                continue
+            try:
+                await ws.send_text(payload)
+            except WebSocketDisconnect:
+                raise
+            except Exception as e:
+                log.error("ws.send_failed", kind=msg.kind, err=str(e))
     except WebSocketDisconnect:
         pass
     finally:

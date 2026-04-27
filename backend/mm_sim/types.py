@@ -111,7 +111,7 @@ class MMState(BaseModel):
 
 class WsMessage(BaseModel):
     seq: int
-    kind: Literal["snapshot", "fill", "quote_update", "metric_tick", "scenario_event", "log"]
+    kind: Literal["snapshot", "fill", "quote_update", "metric_tick", "scenario_event", "intervention_event", "log"]
     payload: dict[str, Any]
 
 

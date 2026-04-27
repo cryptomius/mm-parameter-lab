@@ -28,3 +28,6 @@ Thumbs.db
 
 # Frontend build
 frontend/dist/
+
+# Dev screenshots
+frontend/screenshot*.png

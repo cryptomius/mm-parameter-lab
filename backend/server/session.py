@@ -113,15 +113,23 @@ class Session:
         # Apply immediately at current sim_t
         ev2 = ScenarioEvent(at_seconds=self.engine.sim_t, kind=ev.kind, params=ev.params)
         scenarios_lib.apply(self.engine, ev2.kind, ev2.params)
+        self._publish(
+            "scenario_event",
+            {"t": self.engine.sim_t, "kind": ev2.kind.value, "params": ev2.params, "source": "user"},
+        )
 
     # --- internal -------------------------------------------------------------
 
     def _run_loop(self) -> None:
-        """The simulation worker. Sleeps to throttle to wall clock at speed × tick."""
+        """Simulation worker. Streams fills, scenarios, quotes, and L2 snapshots over WS."""
         assert self.engine is not None
         engine = self.engine
         last_quote_emit = 0.0
         last_book_emit = 0.0
+        last_scenario_idx = engine._scenario_idx
+        last_fill_idx = len(engine.fill_records)
+        last_quote_record_idx = len(engine.quote_records)
+        mm_id = engine.mm_cp.id
         end_t = self.cfg.duration_seconds
         wall_dt = engine.tick_dt / max(self.speed, 1e-6) if self.speed > 0 else 0.0
 
@@ -131,12 +139,77 @@ class Session:
                 continue
             t0 = time.perf_counter()
             self._tick_engine(engine)
+            while last_fill_idx < len(engine.fill_records):
+                fr = engine.fill_records[last_fill_idx]
+                # aggressor = opposite of maker side; if maker was BID, taker sold (sell aggressor).
+                aggressor = "sell" if fr.side.value == "bid" else "buy"
+                mm_involved = fr.maker_cp_id == mm_id or fr.taker_cp_id == mm_id
+                self._publish(
+                    "fill",
+                    {
+                        "t": fr.t,
+                        "price": fr.price,
+                        "size": fr.size,
+                        "aggressor": aggressor,
+                        "mid": fr.mid_at_fill,
+                        "mm": mm_involved,
+                    },
+                )
+                # MM-as-taker = hedge order (only place MM lifts liquidity)
+                if fr.taker_cp_id == mm_id:
+                    self._publish(
+                        "intervention_event",
+                        {
+                            "t": fr.t,
+                            "kind": "hedge_on_threshold",
+                            "action": "hedge_fill",
+                            "details": {
+                                "side": "buy" if fr.side.value == "ask" else "sell",
+                                "size": fr.size,
+                                "price": fr.price,
+                            },
+                        },
+                    )
+                last_fill_idx += 1
+            while last_quote_record_idx < len(engine.quote_records):
+                qr = engine.quote_records[last_quote_record_idx]
+                if "pulled" in qr.interventions_active:
+                    reason = next(
+                        (n for n in qr.interventions_active if n != "pulled"),
+                        "unknown",
+                    )
+                    self._publish(
+                        "intervention_event",
+                        {
+                            "t": qr.t,
+                            "kind": reason,
+                            "action": "quotes_pulled",
+                            "details": {"inventory": qr.inventory, "sigma_est": qr.sigma_est},
+                        },
+                    )
+                last_quote_record_idx += 1
+            if engine._scenario_idx > last_scenario_idx:
+                for ev in self.cfg.events[last_scenario_idx : engine._scenario_idx]:
+                    self._publish(
+                        "scenario_event",
+                        {
+                            "t": engine.sim_t,
+                            "kind": ev.kind.value,
+                            "params": ev.params,
+                            "source": "scheduled",
+                        },
+                    )
+                last_scenario_idx = engine._scenario_idx
             # Emit selectively — quotes after each refresh, book at ~5Hz
             if engine.sim_t - last_quote_emit >= 0.1:
+                book_mid = engine.book.mid()
+                ref_mid = book_mid if book_mid is not None else engine.process.price
                 self._publish(
                     "quote_update",
                     {
                         "t": engine.sim_t,
+                        "mid": ref_mid,
+                        "fills_count": engine.pnl.fills,
                         "inventory": engine.pnl.inventory,
                         "total_pnl": engine.pnl.total_pnl,
                         "spread_pnl": engine.pnl.realised_spread_pnl,

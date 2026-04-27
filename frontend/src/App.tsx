@@ -1,62 +1,63 @@
 import { useEffect } from "react";
 import { api } from "./api/rest";
-import { wsClient } from "./api/ws";
+import { startWsPump, stopWsPump } from "./api/wsPump";
 import { InventoryChart } from "./components/InventoryChart";
 import { InterventionToggles } from "./components/InterventionToggles";
 import { MetricsDashboard } from "./components/MetricsDashboard";
 import { OrderBookLadder } from "./components/OrderBookLadder";
 import { ParameterPanel } from "./components/ParameterPanel";
 import { PnLChart } from "./components/PnLChart";
+import { PriceVolumeChart } from "./components/PriceVolumeChart";
 import { ScenarioPanel } from "./components/ScenarioPanel";
+import { TradesTape } from "./components/TradesTape";
+import { useChartStore } from "./state/chartStore";
 import { useSessionStore } from "./state/sessionStore";
-import type { L2Snapshot } from "./types/messages";
 
 export default function App() {
-  const { experiments, selectedId, setSelected, state, setState, pushTick, setSnapshot, loadExperiments } =
-    useSessionStore();
+  const experiments = useSessionStore((s) => s.experiments);
+  const selectedId = useSessionStore((s) => s.selectedId);
+  const setSelected = useSessionStore((s) => s.setSelected);
+  const running = useSessionStore((s) => s.state.running);
+  const experimentId = useSessionStore((s) => s.state.experiment_id);
+  const simT = useSessionStore((s) => s.state.sim_t);
+  const setState = useSessionStore((s) => s.setState);
+  const resetEvents = useSessionStore((s) => s.resetEvents);
+  const loadExperiments = useSessionStore((s) => s.loadExperiments);
 
   useEffect(() => {
     loadExperiments();
   }, [loadExperiments]);
 
+  // Poll session state at 1 Hz; reset chart + events when sim ends naturally
   useEffect(() => {
+    let prev: boolean | null = null;
     const id = setInterval(async () => {
       try {
         const s = await api.state();
+        if (prev === true && s.running === false) {
+          useChartStore.getState().reset();
+          resetEvents();
+        }
+        prev = s.running;
         setState(s);
       } catch {
         /* ignore */
       }
     }, 1000);
     return () => clearInterval(id);
-  }, [setState]);
+  }, [setState, resetEvents]);
 
+  // Start/stop the WS pump as a side-effect of session state — runs off the
+  // React render path and feeds the chart store at 10 Hz max.
   useEffect(() => {
-    if (!state.running) return;
-    wsClient.connect();
-    const off = wsClient.subscribe((msg) => {
-      if (msg.kind === "quote_update") {
-        const p = msg.payload as Record<string, number | string[]>;
-        pushTick({
-          t: Number(p.t),
-          inventory: Number(p.inventory),
-          total_pnl: Number(p.total_pnl),
-          spread_pnl: Number(p.spread_pnl),
-          inventory_pnl: Number(p.inventory_pnl),
-          sigma_est: Number(p.sigma_est),
-          active_interventions: (p.active_interventions as string[]) ?? [],
-        });
-      } else if (msg.kind === "snapshot") {
-        setSnapshot(msg.payload as unknown as L2Snapshot);
-      }
-    });
-    return () => {
-      off();
-      wsClient.disconnect();
-    };
-  }, [state.running, pushTick, setSnapshot]);
+    if (!running) return;
+    startWsPump();
+    return () => stopWsPump();
+  }, [running]);
 
   const onStart = async () => {
+    useChartStore.getState().reset();
+    resetEvents();
     await api.start(selectedId, 5);
     const s = await api.state();
     setState(s);
@@ -64,6 +65,8 @@ export default function App() {
   const onStop = async () => {
     await api.stop();
     setState({ running: false });
+    useChartStore.getState().reset();
+    resetEvents();
   };
 
   return (
@@ -75,7 +78,7 @@ export default function App() {
             className="input w-56"
             value={selectedId}
             onChange={(e) => setSelected(e.target.value)}
-            disabled={state.running}
+            disabled={running}
           >
             {experiments.map((e) => (
               <option key={e.id} value={e.id}>
@@ -83,22 +86,24 @@ export default function App() {
               </option>
             ))}
           </select>
-          {!state.running ? (
+          {!running ? (
             <button className="btn-primary" onClick={onStart}>▶ Start</button>
           ) : (
             <button className="btn-danger" onClick={onStop}>■ Stop</button>
           )}
           <span className="text-xs text-sub">
-            {state.running ? `running ${state.experiment_id} · t=${(state.sim_t ?? 0).toFixed(1)}s` : "idle"}
+            {running ? `running ${experimentId} · t=${(simT ?? 0).toFixed(1)}s` : "idle"}
           </span>
         </div>
       </header>
 
       <main className="grid grid-cols-12 gap-3">
-        <section className="col-span-3">
+        <section className="col-span-3 space-y-3">
           <OrderBookLadder />
+          <TradesTape />
         </section>
         <section className="col-span-6 space-y-3">
+          <PriceVolumeChart />
           <InventoryChart />
           <PnLChart />
         </section>

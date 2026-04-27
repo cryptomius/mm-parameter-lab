@@ -13,9 +13,26 @@ export interface MMState {
 }
 
 export interface QuoteUpdatePayload {
-  t: number; inventory: number;
+  t: number; mid: number; fills_count: number; inventory: number;
   total_pnl: number; spread_pnl: number; inventory_pnl: number;
   sigma_est: number; active_interventions: string[];
+}
+
+export interface ScenarioEventPayload {
+  t: number; kind: string; params: Record<string, unknown>; source?: string;
+}
+
+export interface InterventionEventPayload {
+  t: number; kind: string; action: string; details?: Record<string, unknown>;
+}
+
+export interface FillPayload {
+  t: number;
+  price: number;
+  size: number;
+  aggressor: "buy" | "sell";
+  mid: number;
+  mm: boolean;
 }
 
 export type WsKind = "snapshot" | "fill" | "quote_update" | "metric_tick" | "scenario_event" | "log";

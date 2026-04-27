@@ -1,0 +1,10 @@
+{
+  "total_pnl": 1902.6061414048156,
+  "spread_pnl": 1902.2533974073913,
+  "inventory_pnl": 0.3527439974242984,
+  "max_abs_inventory": 77.13317374567143,
+  "time_at_limit_pct": 0.0,
+  "quote_uptime_pct": 100.00000000024205,
+  "fill_count": 47561,
+  "mean_drift_bps_10s": 0.12143669077045603
+}

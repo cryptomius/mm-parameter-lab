@@ -1,0 +1,640 @@
+# Experiment manifest. Each entry is one logical experiment; sweeps (gamma_sweep,
+# multiple seeds) are expanded by runner.manifest.expand into concrete runs.
+
+# --- Baseline ----------------------------------------------------------------
+- id: baseline_calm
+  finding: 0
+  description: Baseline AS quoter on calm GBM, no events, no interventions.
+  seeds: [42]
+  duration_seconds: 14400
+  market:
+    process: gbm
+    sigma_true: 0.001
+    drift: 0.0
+    initial_price: 100.0
+  counterparties:
+    noise:
+      count: 16
+      arrival_rate_hz: 5.0
+      limit_fraction: 0.7
+      cancel_halflife_s: 30.0
+    informed:
+      count: 0
+  quoter:
+    type: avellaneda_stoikov
+    gamma: 0.1
+    k: 10.0
+    tau: 300
+    quote_size: 1.0
+    refresh_ms: 100
+    inventory_limit: 100
+    spread_caps: { min: 0.0001, max: 0.05 }
+    sigma_estimator:
+      type: ewma
+      halflife_s: 60
+  events: []
+  output_path: results/baseline_calm
+
+# --- Finding 1 ---------------------------------------------------------------
+- id: f1_gamma_sweep_low_vol
+  finding: 1
+  description: Gamma sweep on calm GBM (low vol).
+  seeds: [42]
+  duration_seconds: 14400
+  market:
+    process: gbm
+    sigma_true: 0.001
+    initial_price: 100.0
+  counterparties:
+    noise: { count: 16, arrival_rate_hz: 5.0, cancel_halflife_s: 30.0 }
+    informed: { count: 0 }
+  quoter:
+    gamma_sweep: [0.01, 0.1, 0.5, 1.0, 5.0]
+    k: 10.0
+    tau: 300
+    refresh_ms: 100
+    inventory_limit: 100
+    sigma_estimator: { type: ewma, halflife_s: 60 }
+  output_path: results/f1/gamma_sweep_low_vol
+
+- id: f1_gamma_sweep_high_vol
+  finding: 1
+  description: Gamma sweep on high-vol GBM (3x baseline).
+  seeds: [42]
+  duration_seconds: 14400
+  market:
+    process: gbm
+    sigma_true: 0.003
+    initial_price: 100.0
+  counterparties:
+    noise: { count: 16, arrival_rate_hz: 5.0, cancel_halflife_s: 30.0 }
+    informed: { count: 0 }
+  quoter:
+    gamma_sweep: [0.01, 0.1, 0.5, 1.0, 5.0]
+    k: 10.0
+    tau: 300
+    refresh_ms: 100
+    inventory_limit: 100
+    sigma_estimator: { type: ewma, halflife_s: 60 }
+  output_path: results/f1/gamma_sweep_high_vol
+
+- id: f1_sigma_estimation_lowvol
+  finding: 1
+  description: EWMA half-life sweep at low vol with fixed gamma.
+  seeds: [42]
+  duration_seconds: 14400
+  market:
+    process: gbm
+    sigma_true: 0.001
+    initial_price: 100.0
+  counterparties:
+    noise: { count: 16, arrival_rate_hz: 5.0, cancel_halflife_s: 30.0 }
+    informed: { count: 0 }
+  quoter:
+    gamma: 0.1
+    k: 10.0
+    tau: 300
+    refresh_ms: 100
+    sigma_estimator: { type: ewma, halflife_s: 60 }
+  output_path: results/f1/sigma_estimation_lowvol
+
+# --- Finding 2 — Adverse Selection -------------------------------------------
+- id: f2_informed_00pct
+  finding: 2
+  description: No informed traders (control).
+  seeds: [42]
+  duration_seconds: 14400
+  market: { process: gbm, sigma_true: 0.001, initial_price: 100.0 }
+  counterparties:
+    noise: { count: 16, arrival_rate_hz: 5.0, cancel_halflife_s: 30.0 }
+    informed:
+      count: 0
+  quoter:
+    gamma: 0.1
+    k: 10.0
+    tau: 300
+    refresh_ms: 100
+    sigma_estimator: { type: ewma, halflife_s: 60 }
+  output_path: results/f2/informed_00
+
+- id: f2_informed_10pct
+  finding: 2
+  description: 10% informed flow target.
+  seeds: [42]
+  duration_seconds: 14400
+  market: { process: gbm, sigma_true: 0.001, initial_price: 100.0 }
+  counterparties:
+    noise: { count: 16, arrival_rate_hz: 5.0, cancel_halflife_s: 30.0 }
+    informed:
+      count: 4
+      arrival_rate_hz: 0.5
+      lookahead_min_s: 1.0
+      lookahead_max_s: 30.0
+      signal_noise_std: 0.5
+      market_order_fraction: 0.5
+  quoter:
+    gamma: 0.1
+    k: 10.0
+    tau: 300
+    refresh_ms: 100
+    sigma_estimator: { type: ewma, halflife_s: 60 }
+  output_path: results/f2/informed_10
+
+- id: f2_informed_20pct
+  finding: 2
+  description: 20% informed flow target.
+  seeds: [42]
+  duration_seconds: 14400
+  market: { process: gbm, sigma_true: 0.001, initial_price: 100.0 }
+  counterparties:
+    noise: { count: 16, arrival_rate_hz: 5.0, cancel_halflife_s: 30.0 }
+    informed:
+      count: 4
+      arrival_rate_hz: 1.2
+      lookahead_min_s: 1.0
+      lookahead_max_s: 30.0
+      signal_noise_std: 0.5
+      market_order_fraction: 0.5
+  quoter:
+    gamma: 0.1
+    k: 10.0
+    tau: 300
+    refresh_ms: 100
+    sigma_estimator: { type: ewma, halflife_s: 60 }
+  output_path: results/f2/informed_20
+
+- id: f2_informed_30pct
+  finding: 2
+  description: 30% informed flow target.
+  seeds: [42]
+  duration_seconds: 14400
+  market: { process: gbm, sigma_true: 0.001, initial_price: 100.0 }
+  counterparties:
+    noise: { count: 16, arrival_rate_hz: 5.0, cancel_halflife_s: 30.0 }
+    informed:
+      count: 4
+      arrival_rate_hz: 2.0
+      lookahead_min_s: 1.0
+      lookahead_max_s: 30.0
+      signal_noise_std: 0.5
+      market_order_fraction: 0.5
+  quoter:
+    gamma: 0.1
+    k: 10.0
+    tau: 300
+    refresh_ms: 100
+    sigma_estimator: { type: ewma, halflife_s: 60 }
+  output_path: results/f2/informed_30
+
+- id: f2_penalty_none
+  finding: 2
+  description: 20% informed, no intervention (control for penalty experiment).
+  seeds: [42]
+  duration_seconds: 14400
+  market: { process: gbm, sigma_true: 0.001, initial_price: 100.0 }
+  counterparties:
+    noise: { count: 16, arrival_rate_hz: 5.0, cancel_halflife_s: 30.0 }
+    informed:
+      count: 4
+      arrival_rate_hz: 1.2
+      lookahead_min_s: 1.0
+      lookahead_max_s: 30.0
+      signal_noise_std: 0.5
+      market_order_fraction: 0.5
+  quoter:
+    gamma: 0.1
+    k: 10.0
+    tau: 300
+    refresh_ms: 100
+    sigma_estimator: { type: ewma, halflife_s: 60 }
+  interventions: {}
+  output_path: results/f2/penalty_none
+
+- id: f2_penalty_per_cp
+  finding: 2
+  description: 20% informed, per-counterparty penalty intervention.
+  seeds: [42]
+  duration_seconds: 14400
+  market: { process: gbm, sigma_true: 0.001, initial_price: 100.0 }
+  counterparties:
+    noise: { count: 16, arrival_rate_hz: 5.0, cancel_halflife_s: 30.0 }
+    informed:
+      count: 4
+      arrival_rate_hz: 1.2
+      lookahead_min_s: 1.0
+      lookahead_max_s: 30.0
+      signal_noise_std: 0.5
+      market_order_fraction: 0.5
+  quoter:
+    gamma: 0.1
+    k: 10.0
+    tau: 300
+    refresh_ms: 100
+    sigma_estimator: { type: ewma, halflife_s: 60 }
+  interventions:
+    per_counterparty_penalty: true
+    cp_penalty_decay_halflife_s: 600
+  output_path: results/f2/penalty_per_cp
+
+- id: f2_penalty_global_widen
+  finding: 2
+  description: 20% informed, global widening (adaptive_spread on as proxy).
+  seeds: [42]
+  duration_seconds: 14400
+  market: { process: gbm, sigma_true: 0.001, initial_price: 100.0 }
+  counterparties:
+    noise: { count: 16, arrival_rate_hz: 5.0, cancel_halflife_s: 30.0 }
+    informed:
+      count: 4
+      arrival_rate_hz: 1.2
+      lookahead_min_s: 1.0
+      lookahead_max_s: 30.0
+      signal_noise_std: 0.5
+      market_order_fraction: 0.5
+  quoter:
+    gamma: 0.1
+    k: 10.0
+    tau: 300
+    refresh_ms: 100
+    sigma_estimator: { type: ewma, halflife_s: 60 }
+  interventions:
+    adaptive_spread: true
+    adaptive_spread_mult_per_vol: 2.0
+  output_path: results/f2/penalty_global_widen
+
+# --- Finding 3 — Stress Scenarios -------------------------------------------
+# 4 scenarios x 4 intervention variants. Same seed across all f3 runs.
+# Window: 30min calm warm-up, event at t=1800, 30min recovery (1hr total).
+
+# --- selloff ---
+- id: f3_selloff_off
+  finding: 3
+  description: Sell-off scenario, all interventions OFF.
+  seeds: [42]
+  duration_seconds: 3600
+  market: { process: gbm, sigma_true: 0.0015, initial_price: 100.0 }
+  counterparties:
+    noise: { count: 16, arrival_rate_hz: 5.0, cancel_halflife_s: 30.0 }
+    informed: { count: 0 }
+  quoter: { gamma: 0.1, k: 10.0, tau: 300, refresh_ms: 100, sigma_estimator: { type: ewma, halflife_s: 60 } }
+  events:
+    - { at_seconds: 1800, kind: selloff, params: { size: 60 } }
+  interventions: {}
+  output_path: results/f3/selloff/off
+
+- id: f3_selloff_adaptive
+  finding: 3
+  description: Sell-off, adaptive_spread only.
+  seeds: [42]
+  duration_seconds: 3600
+  market: { process: gbm, sigma_true: 0.0015, initial_price: 100.0 }
+  counterparties:
+    noise: { count: 16, arrival_rate_hz: 5.0, cancel_halflife_s: 30.0 }
+    informed: { count: 0 }
+  quoter: { gamma: 0.1, k: 10.0, tau: 300, refresh_ms: 100, sigma_estimator: { type: ewma, halflife_s: 60 } }
+  events:
+    - { at_seconds: 1800, kind: selloff, params: { size: 60 } }
+  interventions: { adaptive_spread: true, adaptive_spread_mult_per_vol: 2.0 }
+  output_path: results/f3/selloff/adaptive
+
+- id: f3_selloff_killswitch
+  finding: 3
+  description: Sell-off, kill_switch only.
+  seeds: [42]
+  duration_seconds: 3600
+  market: { process: gbm, sigma_true: 0.0015, initial_price: 100.0 }
+  counterparties:
+    noise: { count: 16, arrival_rate_hz: 5.0, cancel_halflife_s: 30.0 }
+    informed: { count: 0 }
+  quoter: { gamma: 0.1, k: 10.0, tau: 300, refresh_ms: 100, sigma_estimator: { type: ewma, halflife_s: 60 } }
+  events:
+    - { at_seconds: 1800, kind: selloff, params: { size: 60 } }
+  interventions: { kill_switch: true, kill_switch_inventory_pct: 0.7 }
+  output_path: results/f3/selloff/killswitch
+
+- id: f3_selloff_all
+  finding: 3
+  description: Sell-off, all interventions ON.
+  seeds: [42]
+  duration_seconds: 3600
+  market: { process: gbm, sigma_true: 0.0015, initial_price: 100.0 }
+  counterparties:
+    noise: { count: 16, arrival_rate_hz: 5.0, cancel_halflife_s: 30.0 }
+    informed: { count: 0 }
+  quoter: { gamma: 0.1, k: 10.0, tau: 300, refresh_ms: 100, sigma_estimator: { type: ewma, halflife_s: 60 } }
+  events:
+    - { at_seconds: 1800, kind: selloff, params: { size: 60 } }
+  interventions:
+    adaptive_spread: true
+    adaptive_spread_mult_per_vol: 2.0
+    kill_switch: true
+    kill_switch_inventory_pct: 0.7
+    news_detector: true
+    news_detector_jump_bps: 50
+    hedge_on_threshold: true
+    hedge_threshold_pct: 0.6
+  output_path: results/f3/selloff/all
+
+# --- newsspike ---
+- id: f3_newsspike_off
+  finding: 3
+  description: News spike, no interventions.
+  seeds: [42]
+  duration_seconds: 3600
+  market: { process: gbm, sigma_true: 0.0015, initial_price: 100.0 }
+  counterparties:
+    noise: { count: 16, arrival_rate_hz: 5.0, cancel_halflife_s: 30.0 }
+    informed: { count: 0 }
+  quoter: { gamma: 0.1, k: 10.0, tau: 300, refresh_ms: 100, sigma_estimator: { type: ewma, halflife_s: 60 } }
+  events:
+    - { at_seconds: 1800, kind: newsspike, params: { log_jump: 0.015, sigma_mult: 4.0, vol_duration_s: 90 } }
+  interventions: {}
+  output_path: results/f3/newsspike/off
+
+- id: f3_newsspike_adaptive
+  finding: 3
+  description: News spike, adaptive_spread.
+  seeds: [42]
+  duration_seconds: 3600
+  market: { process: gbm, sigma_true: 0.0015, initial_price: 100.0 }
+  counterparties:
+    noise: { count: 16, arrival_rate_hz: 5.0, cancel_halflife_s: 30.0 }
+    informed: { count: 0 }
+  quoter: { gamma: 0.1, k: 10.0, tau: 300, refresh_ms: 100, sigma_estimator: { type: ewma, halflife_s: 60 } }
+  events:
+    - { at_seconds: 1800, kind: newsspike, params: { log_jump: 0.015, sigma_mult: 4.0, vol_duration_s: 90 } }
+  interventions: { adaptive_spread: true, adaptive_spread_mult_per_vol: 2.0 }
+  output_path: results/f3/newsspike/adaptive
+
+- id: f3_newsspike_killswitch
+  finding: 3
+  description: News spike, kill_switch.
+  seeds: [42]
+  duration_seconds: 3600
+  market: { process: gbm, sigma_true: 0.0015, initial_price: 100.0 }
+  counterparties:
+    noise: { count: 16, arrival_rate_hz: 5.0, cancel_halflife_s: 30.0 }
+    informed: { count: 0 }
+  quoter: { gamma: 0.1, k: 10.0, tau: 300, refresh_ms: 100, sigma_estimator: { type: ewma, halflife_s: 60 } }
+  events:
+    - { at_seconds: 1800, kind: newsspike, params: { log_jump: 0.015, sigma_mult: 4.0, vol_duration_s: 90 } }
+  interventions: { kill_switch: true, kill_switch_inventory_pct: 0.7 }
+  output_path: results/f3/newsspike/killswitch
+
+- id: f3_newsspike_all
+  finding: 3
+  description: News spike, all interventions ON.
+  seeds: [42]
+  duration_seconds: 3600
+  market: { process: gbm, sigma_true: 0.0015, initial_price: 100.0 }
+  counterparties:
+    noise: { count: 16, arrival_rate_hz: 5.0, cancel_halflife_s: 30.0 }
+    informed: { count: 0 }
+  quoter: { gamma: 0.1, k: 10.0, tau: 300, refresh_ms: 100, sigma_estimator: { type: ewma, halflife_s: 60 } }
+  events:
+    - { at_seconds: 1800, kind: newsspike, params: { log_jump: 0.015, sigma_mult: 4.0, vol_duration_s: 90 } }
+  interventions:
+    adaptive_spread: true
+    adaptive_spread_mult_per_vol: 2.0
+    kill_switch: true
+    kill_switch_inventory_pct: 0.7
+    news_detector: true
+    news_detector_jump_bps: 50
+  output_path: results/f3/newsspike/all
+
+# --- liqwithdraw ---
+- id: f3_liqwithdraw_off
+  finding: 3
+  description: Liquidity withdrawal (noise rate -> 20%), no interventions.
+  seeds: [42]
+  duration_seconds: 3600
+  market: { process: gbm, sigma_true: 0.0015, initial_price: 100.0 }
+  counterparties:
+    noise: { count: 16, arrival_rate_hz: 5.0, cancel_halflife_s: 30.0 }
+    informed: { count: 0 }
+  quoter: { gamma: 0.1, k: 10.0, tau: 300, refresh_ms: 100, sigma_estimator: { type: ewma, halflife_s: 60 } }
+  events:
+    - { at_seconds: 1800, kind: liqwithdraw, params: { multiplier: 0.2, duration_s: 600 } }
+  interventions: {}
+  output_path: results/f3/liqwithdraw/off
+
+- id: f3_liqwithdraw_adaptive
+  finding: 3
+  description: Liquidity withdrawal, adaptive_spread.
+  seeds: [42]
+  duration_seconds: 3600
+  market: { process: gbm, sigma_true: 0.0015, initial_price: 100.0 }
+  counterparties:
+    noise: { count: 16, arrival_rate_hz: 5.0, cancel_halflife_s: 30.0 }
+    informed: { count: 0 }
+  quoter: { gamma: 0.1, k: 10.0, tau: 300, refresh_ms: 100, sigma_estimator: { type: ewma, halflife_s: 60 } }
+  events:
+    - { at_seconds: 1800, kind: liqwithdraw, params: { multiplier: 0.2, duration_s: 600 } }
+  interventions: { adaptive_spread: true, adaptive_spread_mult_per_vol: 2.0 }
+  output_path: results/f3/liqwithdraw/adaptive
+
+- id: f3_liqwithdraw_killswitch
+  finding: 3
+  description: Liquidity withdrawal, kill_switch (likely HURTS - silent killer test).
+  seeds: [42]
+  duration_seconds: 3600
+  market: { process: gbm, sigma_true: 0.0015, initial_price: 100.0 }
+  counterparties:
+    noise: { count: 16, arrival_rate_hz: 5.0, cancel_halflife_s: 30.0 }
+    informed: { count: 0 }
+  quoter: { gamma: 0.1, k: 10.0, tau: 300, refresh_ms: 100, sigma_estimator: { type: ewma, halflife_s: 60 } }
+  events:
+    - { at_seconds: 1800, kind: liqwithdraw, params: { multiplier: 0.2, duration_s: 600 } }
+  interventions: { kill_switch: true, kill_switch_inventory_pct: 0.4 }
+  output_path: results/f3/liqwithdraw/killswitch
+
+- id: f3_liqwithdraw_all
+  finding: 3
+  description: Liquidity withdrawal, all interventions.
+  seeds: [42]
+  duration_seconds: 3600
+  market: { process: gbm, sigma_true: 0.0015, initial_price: 100.0 }
+  counterparties:
+    noise: { count: 16, arrival_rate_hz: 5.0, cancel_halflife_s: 30.0 }
+    informed: { count: 0 }
+  quoter: { gamma: 0.1, k: 10.0, tau: 300, refresh_ms: 100, sigma_estimator: { type: ewma, halflife_s: 60 } }
+  events:
+    - { at_seconds: 1800, kind: liqwithdraw, params: { multiplier: 0.2, duration_s: 600 } }
+  interventions:
+    adaptive_spread: true
+    adaptive_spread_mult_per_vol: 2.0
+    kill_switch: true
+    kill_switch_inventory_pct: 0.4
+    news_detector: true
+  output_path: results/f3/liqwithdraw/all
+
+# --- toxicburst ---
+- id: f3_toxicburst_off
+  finding: 3
+  description: Concentrated informed flow burst, no interventions.
+  seeds: [42]
+  duration_seconds: 3600
+  market: { process: gbm, sigma_true: 0.0015, initial_price: 100.0 }
+  counterparties:
+    noise: { count: 16, arrival_rate_hz: 5.0, cancel_halflife_s: 30.0 }
+    informed:
+      count: 4
+      arrival_rate_hz: 0.3
+      lookahead_min_s: 1.0
+      lookahead_max_s: 20.0
+      signal_noise_std: 0.3
+      market_order_fraction: 0.7
+  quoter: { gamma: 0.1, k: 10.0, tau: 300, refresh_ms: 100, sigma_estimator: { type: ewma, halflife_s: 60 } }
+  events:
+    - { at_seconds: 1800, kind: toxicburst, params: { multiplier: 8.0, duration_s: 120 } }
+  interventions: {}
+  output_path: results/f3/toxicburst/off
+
+- id: f3_toxicburst_adaptive
+  finding: 3
+  description: Toxic burst, adaptive_spread.
+  seeds: [42]
+  duration_seconds: 3600
+  market: { process: gbm, sigma_true: 0.0015, initial_price: 100.0 }
+  counterparties:
+    noise: { count: 16, arrival_rate_hz: 5.0, cancel_halflife_s: 30.0 }
+    informed:
+      count: 4
+      arrival_rate_hz: 0.3
+      lookahead_min_s: 1.0
+      lookahead_max_s: 20.0
+      signal_noise_std: 0.3
+      market_order_fraction: 0.7
+  quoter: { gamma: 0.1, k: 10.0, tau: 300, refresh_ms: 100, sigma_estimator: { type: ewma, halflife_s: 60 } }
+  events:
+    - { at_seconds: 1800, kind: toxicburst, params: { multiplier: 8.0, duration_s: 120 } }
+  interventions: { adaptive_spread: true, adaptive_spread_mult_per_vol: 2.0 }
+  output_path: results/f3/toxicburst/adaptive
+
+- id: f3_toxicburst_per_cp
+  finding: 3
+  description: Toxic burst, per-counterparty penalty.
+  seeds: [42]
+  duration_seconds: 3600
+  market: { process: gbm, sigma_true: 0.0015, initial_price: 100.0 }
+  counterparties:
+    noise: { count: 16, arrival_rate_hz: 5.0, cancel_halflife_s: 30.0 }
+    informed:
+      count: 4
+      arrival_rate_hz: 0.3
+      lookahead_min_s: 1.0
+      lookahead_max_s: 20.0
+      signal_noise_std: 0.3
+      market_order_fraction: 0.7
+  quoter: { gamma: 0.1, k: 10.0, tau: 300, refresh_ms: 100, sigma_estimator: { type: ewma, halflife_s: 60 } }
+  events:
+    - { at_seconds: 1800, kind: toxicburst, params: { multiplier: 8.0, duration_s: 120 } }
+  interventions: { per_counterparty_penalty: true, cp_penalty_decay_halflife_s: 300 }
+  output_path: results/f3/toxicburst/per_cp
+
+- id: f3_toxicburst_all
+  finding: 3
+  description: Toxic burst, all interventions.
+  seeds: [42]
+  duration_seconds: 3600
+  market: { process: gbm, sigma_true: 0.0015, initial_price: 100.0 }
+  counterparties:
+    noise: { count: 16, arrival_rate_hz: 5.0, cancel_halflife_s: 30.0 }
+    informed:
+      count: 4
+      arrival_rate_hz: 0.3
+      lookahead_min_s: 1.0
+      lookahead_max_s: 20.0
+      signal_noise_std: 0.3
+      market_order_fraction: 0.7
+  quoter: { gamma: 0.1, k: 10.0, tau: 300, refresh_ms: 100, sigma_estimator: { type: ewma, halflife_s: 60 } }
+  events:
+    - { at_seconds: 1800, kind: toxicburst, params: { multiplier: 8.0, duration_s: 120 } }
+  interventions:
+    adaptive_spread: true
+    per_counterparty_penalty: true
+    kill_switch: true
+    kill_switch_inventory_pct: 0.7
+  output_path: results/f3/toxicburst/all
+
+# --- Finding 4 — Parameter interactions (gamma x sigma multiplier grid) -----
+# Heavy: 5 gammas x 5 sigma_mults x 20 seeds = 500 runs. Run overnight.
+- id: f4_gamma_vol_grid_smult_05
+  finding: 4
+  description: F4 grid column, sigma_mult=0.5
+  seeds: [1000, 1001, 1002, 1003, 1004, 1005, 1006, 1007, 1008, 1009,
+          1010, 1011, 1012, 1013, 1014, 1015, 1016, 1017, 1018, 1019]
+  duration_seconds: 14400
+  market: { process: gbm, sigma_true: 0.0005, initial_price: 100.0 }
+  counterparties: { noise: { count: 16, arrival_rate_hz: 5.0 }, informed: { count: 0 } }
+  quoter:
+    gamma_sweep: [0.01, 0.1, 0.5, 1.0, 5.0]
+    k: 10.0
+    tau: 300
+    refresh_ms: 100
+    sigma_estimator: { type: ewma, halflife_s: 60 }
+  output_path: results/f4/grid/smult_05
+
+- id: f4_gamma_vol_grid_smult_1
+  finding: 4
+  description: F4 grid column, sigma_mult=1.0
+  seeds: [1000, 1001, 1002, 1003, 1004, 1005, 1006, 1007, 1008, 1009,
+          1010, 1011, 1012, 1013, 1014, 1015, 1016, 1017, 1018, 1019]
+  duration_seconds: 14400
+  market: { process: gbm, sigma_true: 0.001, initial_price: 100.0 }
+  counterparties: { noise: { count: 16, arrival_rate_hz: 5.0 }, informed: { count: 0 } }
+  quoter:
+    gamma_sweep: [0.01, 0.1, 0.5, 1.0, 5.0]
+    k: 10.0
+    tau: 300
+    refresh_ms: 100
+    sigma_estimator: { type: ewma, halflife_s: 60 }
+  output_path: results/f4/grid/smult_10
+
+- id: f4_gamma_vol_grid_smult_2
+  finding: 4
+  description: F4 grid column, sigma_mult=2.0
+  seeds: [1000, 1001, 1002, 1003, 1004, 1005, 1006, 1007, 1008, 1009,
+          1010, 1011, 1012, 1013, 1014, 1015, 1016, 1017, 1018, 1019]
+  duration_seconds: 14400
+  market: { process: gbm, sigma_true: 0.002, initial_price: 100.0 }
+  counterparties: { noise: { count: 16, arrival_rate_hz: 5.0 }, informed: { count: 0 } }
+  quoter:
+    gamma_sweep: [0.01, 0.1, 0.5, 1.0, 5.0]
+    k: 10.0
+    tau: 300
+    refresh_ms: 100
+    sigma_estimator: { type: ewma, halflife_s: 60 }
+  output_path: results/f4/grid/smult_20
+
+- id: f4_gamma_vol_grid_smult_4
+  finding: 4
+  description: F4 grid column, sigma_mult=4.0
+  seeds: [1000, 1001, 1002, 1003, 1004, 1005, 1006, 1007, 1008, 1009,
+          1010, 1011, 1012, 1013, 1014, 1015, 1016, 1017, 1018, 1019]
+  duration_seconds: 14400
+  market: { process: gbm, sigma_true: 0.004, initial_price: 100.0 }
+  counterparties: { noise: { count: 16, arrival_rate_hz: 5.0 }, informed: { count: 0 } }
+  quoter:
+    gamma_sweep: [0.01, 0.1, 0.5, 1.0, 5.0]
+    k: 10.0
+    tau: 300
+    refresh_ms: 100
+    sigma_estimator: { type: ewma, halflife_s: 60 }
+  output_path: results/f4/grid/smult_40
+
+- id: f4_gamma_vol_grid_smult_8
+  finding: 4
+  description: F4 grid column, sigma_mult=8.0
+  seeds: [1000, 1001, 1002, 1003, 1004, 1005, 1006, 1007, 1008, 1009,
+          1010, 1011, 1012, 1013, 1014, 1015, 1016, 1017, 1018, 1019]
+  duration_seconds: 14400
+  market: { process: gbm, sigma_true: 0.008, initial_price: 100.0 }
+  counterparties: { noise: { count: 16, arrival_rate_hz: 5.0 }, informed: { count: 0 } }
+  quoter:
+    gamma_sweep: [0.01, 0.1, 0.5, 1.0, 5.0]
+    k: 10.0
+    tau: 300
+    refresh_ms: 100
+    sigma_estimator: { type: ewma, halflife_s: 60 }
+  output_path: results/f4/grid/smult_80

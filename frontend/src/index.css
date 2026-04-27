@@ -1,0 +1,25 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+html, body, #root { height: 100%; }
+body { margin: 0; }
+
+.panel {
+  @apply bg-panel border border-border rounded-md;
+}
+.label {
+  @apply text-sub text-[11px] uppercase tracking-wider;
+}
+.btn {
+  @apply px-2 py-1 text-xs border border-border rounded bg-bg hover:bg-border;
+}
+.btn-primary {
+  @apply px-2 py-1 text-xs border border-ask rounded bg-ask/10 text-ask hover:bg-ask/20;
+}
+.btn-danger {
+  @apply px-2 py-1 text-xs border border-bid rounded bg-bid/10 text-bid hover:bg-bid/20;
+}
+.input {
+  @apply bg-bg border border-border rounded px-2 py-0.5 text-xs w-20;
+}

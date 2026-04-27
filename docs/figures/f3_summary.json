@@ -1,0 +1,90 @@
+{
+  "selloff": {
+    "off": {
+      "total_pnl": 489.95865903905474,
+      "max_abs_inv": 62.600666436251,
+      "quote_uptime_pct": 99.99999999993948
+    },
+    "adaptive": {
+      "total_pnl": 491.51805487291284,
+      "max_abs_inv": 78.1670375568402,
+      "quote_uptime_pct": 99.99999999993948
+    },
+    "killswitch": {
+      "total_pnl": 489.95865903905474,
+      "max_abs_inv": 62.600666436251,
+      "quote_uptime_pct": 99.99999999993948
+    },
+    "all": {
+      "total_pnl": 8.222297873061784,
+      "max_abs_inv": 18.360842954096764,
+      "quote_uptime_pct": 4.249999999999877
+    }
+  },
+  "newsspike": {
+    "off": {
+      "total_pnl": 487.7495657377355,
+      "max_abs_inv": 64.07046239960485,
+      "quote_uptime_pct": 99.99999999993948
+    },
+    "adaptive": {
+      "total_pnl": 488.0937222278213,
+      "max_abs_inv": 60.04554960714781,
+      "quote_uptime_pct": 99.99999999993948
+    },
+    "killswitch": {
+      "total_pnl": 487.7495657377355,
+      "max_abs_inv": 64.07046239960485,
+      "quote_uptime_pct": 99.99999999993948
+    },
+    "all": {
+      "total_pnl": 8.967780005991605,
+      "max_abs_inv": 17.647412675859762,
+      "quote_uptime_pct": 4.149999999999883
+    }
+  },
+  "liqwithdraw": {
+    "off": {
+      "total_pnl": 487.7495657377355,
+      "max_abs_inv": 64.07046239960485,
+      "quote_uptime_pct": 99.99999999993948
+    },
+    "adaptive": {
+      "total_pnl": 488.0937222278213,
+      "max_abs_inv": 60.04554960714781,
+      "quote_uptime_pct": 99.99999999993948
+    },
+    "killswitch": {
+      "total_pnl": 83.54359537713505,
+      "max_abs_inv": 40.96885174102985,
+      "quote_uptime_pct": 17.136111111113102
+    },
+    "all": {
+      "total_pnl": 8.967780005991605,
+      "max_abs_inv": 17.647412675859762,
+      "quote_uptime_pct": 4.149999999999883
+    }
+  },
+  "toxicburst": {
+    "off": {
+      "total_pnl": 937.0403166769145,
+      "max_abs_inv": 261.52489716523274,
+      "quote_uptime_pct": 99.99999999993948
+    },
+    "adaptive": {
+      "total_pnl": 921.7887552078172,
+      "max_abs_inv": 260.47276428310624,
+      "quote_uptime_pct": 99.99999999993948
+    },
+    "per_cp": {
+      "total_pnl": 14.750168521692043,
+      "max_abs_inv": 7.082115304976854,
+      "quote_uptime_pct": 99.99999999993948
+    },
+    "all": {
+      "total_pnl": 16.361112402169,
+      "max_abs_inv": 7.15817653815288,
+      "quote_uptime_pct": 99.99999999993948
+    }
+  }
+}

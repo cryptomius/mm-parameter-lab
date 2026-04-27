@@ -1,0 +1,30 @@
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+.venv/
+.python-version.local
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.ipynb_checkpoints/
+node_modules/
+dist/
+build/
+*.log
+
+# Results: keep dir layout, ignore data
+results/**
+!results/.gitkeep
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE / agent
+.vscode/
+.idea/
+.claude/
+
+# Frontend build
+frontend/dist/

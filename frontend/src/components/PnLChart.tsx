@@ -72,8 +72,8 @@ function PnLChartImpl() {
   }, []);
 
   return (
-    <div className="panel p-3 h-48 flex flex-col">
-      <div className="label mb-1">PnL Decomposition</div>
+    <div className="panel p-3 h-full flex flex-col">
+      <div className="label mb-1 flex-shrink-0">PnL Decomposition</div>
       <div ref={containerRef} className="flex-1 min-h-0" />
     </div>
   );

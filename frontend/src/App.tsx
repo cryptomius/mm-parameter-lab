@@ -23,6 +23,8 @@ export default function App() {
   const setState = useSessionStore((s) => s.setState);
   const resetEvents = useSessionStore((s) => s.resetEvents);
   const loadExperiments = useSessionStore((s) => s.loadExperiments);
+  const viewAll = useChartStore((s) => s.viewAll);
+  const setViewAll = useChartStore((s) => s.setViewAll);
 
   useEffect(() => {
     loadExperiments();
@@ -70,8 +72,8 @@ export default function App() {
   };
 
   return (
-    <div className="min-h-screen p-3">
-      <header className="flex justify-between items-center mb-3">
+    <div className="h-screen flex flex-col p-3">
+      <header className="flex justify-between items-center mb-3 flex-shrink-0">
         <div className="flex items-center gap-3">
           <h1 className="text-lg font-bold">MM Sim</h1>
           <select
@@ -94,20 +96,37 @@ export default function App() {
           <span className="text-xs text-sub">
             {running ? `running ${experimentId} · t=${(simT ?? 0).toFixed(1)}s` : "idle"}
           </span>
+          <label
+            className="ml-2 flex items-center gap-1 text-xs text-sub cursor-pointer"
+            title="Keep up to 60 minutes of chart history instead of 6. Enable before Start to capture from t=0."
+          >
+            <input
+              type="checkbox"
+              checked={viewAll}
+              onChange={(e) => setViewAll(e.target.checked)}
+            />
+            view all
+          </label>
         </div>
       </header>
 
-      <main className="grid grid-cols-12 gap-3">
-        <section className="col-span-3 space-y-3">
+      <main className="flex-1 grid grid-cols-12 gap-3 min-h-0">
+        <section className="col-span-3 flex flex-col gap-3 min-h-0 overflow-hidden">
           <OrderBookLadder />
           <TradesTape />
         </section>
-        <section className="col-span-6 space-y-3">
-          <PriceVolumeChart />
-          <InventoryChart />
-          <PnLChart />
+        <section className="col-span-6 flex flex-col gap-3 min-h-0">
+          <div className="flex-1 min-h-0">
+            <PriceVolumeChart />
+          </div>
+          <div className="flex-1 min-h-0">
+            <InventoryChart />
+          </div>
+          <div className="flex-1 min-h-0">
+            <PnLChart />
+          </div>
         </section>
-        <section className="col-span-3 space-y-3">
+        <section className="col-span-3 flex flex-col gap-3 min-h-0 overflow-y-auto">
           <MetricsDashboard />
           <ParameterPanel />
           <InterventionToggles />

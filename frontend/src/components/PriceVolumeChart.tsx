@@ -159,11 +159,11 @@ function PriceVolumeChartImpl() {
   }, []);
 
   return (
-    <div className="panel p-3">
-      <div className="label mb-1">
+    <div className="panel p-3 h-full flex flex-col">
+      <div className="label mb-1 flex-shrink-0">
         Price &amp; Volume <span className="text-sub">({BUCKET_SECONDS}s candles)</span>
       </div>
-      <div ref={containerRef} className="h-64" />
+      <div ref={containerRef} className="flex-1 min-h-0" />
     </div>
   );
 }

@@ -1,10 +1,34 @@
 # Market-Maker Simulator & Parameter Lab
 
-> A discrete-time Avellaneda-Stoikov market-making simulator with a stress
-> scenario library, intervention modules, and a reproducible findings
-> pipeline. The centrepiece deliverable is the **Findings Document**
-> (`docs/findings.md`); the simulator and live UI exist to make the
-> findings reproducible.
+A discrete-time **Avellaneda–Stoikov** market-making simulator with a stress-scenario
+library, toggleable risk interventions, and a real-time UI for poking the quoter
+mid-flight. The headline deliverable is the **Findings Document**
+([findings.md](docs/findings.md) · [PDF](docs/findings.pdf));
+everything else exists to make those findings reproducible and inspectable.
+
+![MM Sim live UI — order book, candles, inventory, PnL, intervention controls and event log](docs/snapshot.png)
+
+> **Read the findings:** [findings.md](docs/findings.md) · [findings.pdf](docs/findings.pdf) · [math appendix](docs/math_appendix.md)
+
+## Live UI at a glance
+
+The screenshot above is the running app at `http://localhost:5173/` against
+`baseline_calm`. Three columns:
+
+- **Left** — L2 order book ladder (bids/asks with depth bars, centered spread
+  row) and a market-trades tape (▲ buy aggressor, ▼ sell aggressor, time
+  in MM:SS.ms of sim time).
+- **Center** — Price & 5-second OHLC volume candles
+  (TradingView lightweight-charts), inventory area, and PnL decomposition
+  lines (uPlot canvas). The `view all` toggle in the
+  header keeps up to 60 minutes of history instead of the default 6.
+- **Right** — live numeric metrics, the three quoter knobs
+  (γ, k, τ — Hit 'enter' or tab/click out to apply), the five interventions
+  (adaptive spread, kill switch, news detector, hedge-on-threshold,
+  per-CP penalty — hover for an inline description), the scenario
+  injector (sell-off, buy-in, news spike, liquidity withdrawal, toxic
+  burst), and the unified events log (⚡ scenarios, 🛡 intervention
+  firings).
 
 ## What's in here
 
@@ -15,15 +39,17 @@
 - **`backend/runner/`** — headless CLI that consumes
   `backend/experiments.yaml` and runs experiments in series or with
   multiprocessing.
-- **`backend/server/`** — FastAPI + websocket server for the live UI.
-- **`frontend/`** — Vite + React + TypeScript single-page app: order
-  book ladder, inventory and PnL charts, live parameter retuning,
-  intervention toggles, and scenario injection.
+- **`backend/server/`** — FastAPI + WebSocket server for the live UI.
+- **`frontend/`** — Vite + React + TypeScript single-page app. Canvas
+  charts (lightweight-charts + uPlot), zustand stores split between
+  control state (1 Hz) and chart state (10 Hz throttled), and a stable
+  WS pump that reconnects automatically.
 - **`notebooks/`** — Python analysis scripts (one per finding) that
   read parquet results and emit every chart referenced in the findings
   document.
-- **`docs/`** — `findings.md` (the analytical write-up),
-  `math_appendix.md`, and `figures/` (PNGs produced by the notebooks).
+- **`docs/`** — [`findings.md`](docs/findings.md) (the analytical write-up),
+  [`math_appendix.md`](docs/math_appendix.md), and `figures/`
+  (PNGs produced by the notebooks).
 - **`scripts/`** — one-line build steps:
   `run_all_experiments.sh`, `render_all_figures.sh`, `build_findings_pdf.sh`.
 
@@ -66,8 +92,16 @@ pnpm --dir frontend dev
 ```
 
 Then open <http://localhost:5173>. Pick an experiment from the dropdown,
-press Start, and use the right-hand panel to retune parameters or
-inject scenarios mid-simulation.
+press **Start**, and:
+
+- **retune** γ / k / τ (Enter or blur to commit — you'll see ✓ applied at t=…s),
+- **toggle interventions** (the inline info panel below the checkboxes
+  describes each one — adaptive spread, kill switch, news detector,
+  hedge on threshold, per-CP penalty),
+- **inject a scenario** (sell-off, buy-in, news spike, liquidity
+  withdrawal, toxic burst — descriptions show on hover) and watch
+  it land in the events log alongside any intervention firings it
+  triggers.
 
 ## Run tests
 
@@ -78,9 +112,9 @@ uv run pytest
 ## What's modelled vs what isn't
 
 This is a **teaching/demonstration tool**, not a production system. See
-`docs/findings.md` §9 for the explicit list of what's deliberately out
-of scope (latency modelling, real fee schedules, multi-venue, real
-microstructure, ML, real exchange connectivity).
+[`docs/findings.md`](docs/findings.md) §9 for the explicit list of what's
+deliberately out of scope (latency modelling, real fee schedules,
+multi-venue, real microstructure, ML, real exchange connectivity).
 
 ## License
 

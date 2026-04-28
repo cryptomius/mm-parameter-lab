@@ -1,4 +1,6 @@
 import { create } from "zustand";
+import { api } from "../api/rest";
+import { CUSTOM_REGIME_KEY, findRegime } from "./regimes";
 import type { Experiment, InterventionEventPayload, ScenarioEventPayload, SessionState } from "../types/messages";
 
 export type EventLogEntry = (
@@ -18,6 +20,12 @@ interface Store {
   pushIntervention: (e: InterventionEventPayload) => void;
   resetEvents: () => void;
   loadExperiments: () => Promise<void>;
+  // Operating regime (preset of params + intervention flags). Editing any
+  // individual control switches this to "custom" so the dropdown reflects
+  // divergence from the preset.
+  regime: string;
+  setRegime: (key: string) => void;
+  applyRegime: (key: string) => Promise<void>;
 }
 
 const MAX_EVENTS = 50;
@@ -60,5 +68,29 @@ export const useSessionStore = create<Store>((set, get) => ({
     const r = await fetch("/api/experiments");
     const xs = (await r.json()) as Experiment[];
     set({ experiments: xs, selectedId: xs[0]?.id ?? "baseline_calm" });
+  },
+  regime: "calm_spread_capture",
+  setRegime: (key) => set({ regime: key }),
+  applyRegime: async (key) => {
+    const regime = findRegime(key);
+    if (!regime) return;
+    // Optimistic local update so the dropdown + info box don't blink to
+    // "custom" while the PATCHes are in flight.
+    set({ regime: key });
+    // Patch parameters and intervention flags in parallel.
+    const tasks: Promise<unknown>[] = [api.patchParams(regime.params)];
+    for (const [name, enabled] of Object.entries(regime.interventions)) {
+      tasks.push(api.patchIntervention(name, enabled));
+    }
+    try {
+      await Promise.all(tasks);
+      // Refetch authoritative state so the UI reflects the new bundle.
+      const fresh = await api.state();
+      set({ state: fresh });
+    } catch (err) {
+      // On any failure, revert dropdown to "custom" to flag divergence.
+      set({ regime: CUSTOM_REGIME_KEY });
+      throw err;
+    }
   },
 }));

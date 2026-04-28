@@ -2,12 +2,14 @@ import { useEffect } from "react";
 import { api } from "./api/rest";
 import { startWsPump, stopWsPump } from "./api/wsPump";
 import { InventoryChart } from "./components/InventoryChart";
+import { InventoryRiskPanel } from "./components/InventoryRiskPanel";
 import { InterventionToggles } from "./components/InterventionToggles";
 import { MetricsDashboard } from "./components/MetricsDashboard";
 import { OrderBookLadder } from "./components/OrderBookLadder";
 import { ParameterPanel } from "./components/ParameterPanel";
 import { PnLChart } from "./components/PnLChart";
 import { PriceVolumeChart } from "./components/PriceVolumeChart";
+import { RegimeSelector } from "./components/RegimeSelector";
 import { ReservationChart } from "./components/ReservationChart";
 import { ScenarioPanel } from "./components/ScenarioPanel";
 import { SpreadCompositionChart } from "./components/SpreadCompositionChart";
@@ -136,6 +138,8 @@ export default function App() {
         </section>
         <section className="col-span-3 flex flex-col gap-3 min-h-0 overflow-y-auto">
           <MetricsDashboard />
+          <RegimeSelector />
+          <InventoryRiskPanel />
           <ParameterPanel />
           <InterventionToggles />
           <ScenarioPanel />

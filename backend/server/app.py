@@ -105,6 +105,15 @@ async def patch_interventions(patch: dict[str, Any]) -> dict[str, Any]:
     return {"ok": True}
 
 
+@app.patch("/api/session/intervention_params")
+async def patch_intervention_params(patch: dict[str, Any]) -> dict[str, Any]:
+    """Patch numeric intervention thresholds (kill_switch_inventory_pct,
+    hedge_threshold_pct, etc). Binary on/off flags use /interventions."""
+    if SESSION:
+        SESSION.update_intervention_params(patch)
+    return {"ok": True}
+
+
 @app.post("/api/session/inject_event")
 async def inject_event(payload: dict[str, Any]) -> dict[str, Any]:
     if SESSION:
@@ -136,6 +145,10 @@ async def get_state() -> dict[str, Any]:
         "gamma": e.quoter.gamma,
         "k": e.quoter.k,
         "tau": e.quoter.tau,
+        "q_target": e.quoter.q_target,
+        "bid_widening_factor": e.quoter.bid_widening_factor,
+        "ask_widening_factor": e.quoter.ask_widening_factor,
+        "inventory_limit": e.intervention_ctx.inventory_limit,
         "interventions": {
             n: getattr(e.intervention_ctx.cfg, n)
             for n in (
@@ -145,6 +158,13 @@ async def get_state() -> dict[str, Any]:
                 "hedge_on_threshold",
                 "per_counterparty_penalty",
             )
+        },
+        "intervention_params": {
+            "kill_switch_inventory_pct": e.intervention_ctx.cfg.kill_switch_inventory_pct,
+            "hedge_threshold_pct": e.intervention_ctx.cfg.hedge_threshold_pct,
+            "adaptive_spread_mult_per_vol": e.intervention_ctx.cfg.adaptive_spread_mult_per_vol,
+            "news_detector_jump_bps": e.intervention_ctx.cfg.news_detector_jump_bps,
+            "cp_penalty_decay_halflife_s": e.intervention_ctx.cfg.cp_penalty_decay_halflife_s,
         },
     }
 

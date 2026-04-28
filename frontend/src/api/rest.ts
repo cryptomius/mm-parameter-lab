@@ -33,6 +33,12 @@ export const api = {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ name, enabled }),
     }).then(j),
+  patchInterventionParams: (patch: Record<string, number>) =>
+    fetch("/api/session/intervention_params", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(patch),
+    }).then(j),
   inject: (kind: string, params: Record<string, unknown> = {}) =>
     fetch("/api/session/inject_event", {
       method: "POST",

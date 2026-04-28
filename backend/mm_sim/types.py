@@ -176,6 +176,14 @@ class QuoterConfig(BaseModel):
     quote_size: float = 1.0
     refresh_ms: float = 100.0
     inventory_limit: float = 100.0
+    # Inventory target the quoter biases toward. Reservation: r = mid - (q - q_target)·γ·σ²·τ.
+    # Negative q_target = pre-skewed short (biases toward selling) — useful for known
+    # structural buy-side pressure (e.g. token-vesting sellers).
+    q_target: float = 0.0
+    # Multipliers applied to the AS half-spread (after the intervention pipeline) to
+    # produce per-side asymmetric spreads. >1 = step OUT, <1 = step IN.
+    bid_widening_factor: float = 1.0
+    ask_widening_factor: float = 1.0
     spread_caps: SpreadCaps = SpreadCaps()
     sigma_estimator: SigmaEstimatorConfig = SigmaEstimatorConfig()
     # sweep helpers — runner expands:

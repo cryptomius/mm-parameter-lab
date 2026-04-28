@@ -179,6 +179,9 @@ class Engine:
             tau=cfg.quoter.tau,
             spread_min=cfg.quoter.spread_caps.min,
             spread_max=cfg.quoter.spread_caps.max,
+            q_target=cfg.quoter.q_target,
+            bid_widening_factor=cfg.quoter.bid_widening_factor,
+            ask_widening_factor=cfg.quoter.ask_widening_factor,
         )
         self.intervention_ctx = InterventionContext(
             cfg=cfg.interventions,
@@ -511,6 +514,21 @@ class Engine:
             active.append("news_detector")
 
         self.intervention_ctx.last_mid = mid
+        # Asymmetric spread caps — applied AFTER the intervention pipeline so
+        # they compose with adaptive_spread and per_cp_penalty widening.
+        bid_factor = self.quoter.bid_widening_factor
+        ask_factor = self.quoter.ask_widening_factor
+        if bid_factor != 1.0 or ask_factor != 1.0:
+            r = quote.reservation_price
+            h = quote.half_spread
+            quote = Quote(
+                bid_price=r - h * bid_factor,
+                ask_price=r + h * ask_factor,
+                reservation_price=r,
+                half_spread=h,
+                inv_risk_term=quote.inv_risk_term,
+                rent_term=quote.rent_term,
+            )
         # Place fresh quotes
         quote_replace(
             self.book,

@@ -60,3 +60,49 @@ def test_formula_matches_hand_computation() -> None:
     expected_half = (gamma * sigma * sigma * tau) / 2 + (1 / gamma) * math.log1p(gamma / k)
     assert quote.reservation_price == pytest.approx(expected_res)
     assert quote.half_spread == pytest.approx(expected_half)
+
+
+def test_q_target_shifts_skew_origin() -> None:
+    # With q_target=10 and inventory=10, the skew should be zero (quotes centered on mid).
+    q = AvellanedaStoikov(
+        gamma=0.5, k=1.5, tau=300, spread_min=0, spread_max=1, q_target=10.0
+    )
+    quote = q.quote(mid=100.0, inventory=10.0, sigma=0.01)
+    assert quote.reservation_price == pytest.approx(100.0)
+
+
+def test_q_target_identity_with_zero_inventory() -> None:
+    # q_target=-30 with inventory=0 should match q_target=0 with inventory=+30
+    # (mathematical identity: r = mid - (q - q_target) * γ * σ² * τ).
+    q1 = AvellanedaStoikov(
+        gamma=0.5, k=1.5, tau=300, spread_min=0, spread_max=1, q_target=-30.0
+    )
+    q2 = AvellanedaStoikov(
+        gamma=0.5, k=1.5, tau=300, spread_min=0, spread_max=1, q_target=0.0
+    )
+    a = q1.quote(mid=100.0, inventory=0.0, sigma=0.01)
+    b = q2.quote(mid=100.0, inventory=30.0, sigma=0.01)
+    assert a.reservation_price == pytest.approx(b.reservation_price)
+    assert a.bid_price == pytest.approx(b.bid_price)
+    assert a.ask_price == pytest.approx(b.ask_price)
+
+
+def test_asymmetric_factors_are_stored_not_applied_in_quote() -> None:
+    # The AS quoter stores the factors but emits a SYMMETRIC quote — the
+    # engine applies them after the intervention pipeline.
+    q = AvellanedaStoikov(
+        gamma=0.5,
+        k=1.5,
+        tau=300,
+        spread_min=0,
+        spread_max=1,
+        bid_widening_factor=2.0,
+        ask_widening_factor=0.5,
+    )
+    quote = q.quote(mid=100.0, inventory=0.0, sigma=0.01)
+    assert q.bid_widening_factor == 2.0
+    assert q.ask_widening_factor == 0.5
+    # Symmetric: |bid - res| == |ask - res|
+    assert quote.reservation_price - quote.bid_price == pytest.approx(
+        quote.ask_price - quote.reservation_price
+    )

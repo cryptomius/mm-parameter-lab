@@ -28,13 +28,21 @@ The screenshot above is the running app at `http://localhost:5173/` against
   vol-driven changes stay visible even when rent dominates by orders
   of magnitude). All uPlot canvas. The `view all` toggle in the
   header keeps up to 60 minutes of history instead of the default 6.
-- **Right** — live numeric metrics, the three quoter knobs
-  (γ, k, τ — Hit 'enter' or tab/click out to apply), the five interventions
-  (adaptive spread, kill switch, news detector, hedge-on-threshold,
-  per-CP penalty — hover for an inline description), the scenario
-  injector (sell-off, buy-in, news spike, liquidity withdrawal, toxic
-  burst), and the unified events log (⚡ scenarios, 🛡 intervention
-  firings).
+- **Right** — live numeric metrics; the **Operating Regime** dropdown
+  (one-click bundles of params + intervention flags — `calm spread
+  capture`, `high inv aversion`, `structural sell pressure (vesting)`,
+  `structural buy pressure`, `high vol`, `thin book`, `toxic-flow burst`;
+  switches to `Custom` when you tweak any control); the **Inventory Risk
+  Budget** panel (`inventory_limit`, kill-switch %, hedge %, with a
+  live |inv| dot that turns yellow at the hedge threshold and red at
+  the kill threshold); the **Quoter Parameters** panel (γ, k, τ on log
+  sliders; q_target, bid- and ask-widening factors on linear sliders —
+  numeric input + slider for every knob, hover info-box for every
+  control); the five interventions (adaptive spread, kill switch, news
+  detector, hedge-on-threshold, per-CP penalty — hover for inline
+  description); the scenario injector (sell-off, buy-in, news spike,
+  liquidity withdrawal, toxic burst); and the unified events log (⚡
+  scenarios, 🛡 intervention firings).
 
 ## What's in here
 

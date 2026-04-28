@@ -1,11 +1,25 @@
 """Avellaneda-Stoikov quoter, infinite-horizon variant (D2).
 
-Reservation price: r = s − q · γ · σ² · τ
+Reservation price: r = s − (q − q_target) · γ · σ² · τ
 Half-spread:      δ = (γ · σ² · τ) / 2 + (1/γ) · ln(1 + γ/k)
-Quotes:           bid = r − δ, ask = r + δ
+Quotes:           bid = r − δ, ask = r + δ   (SYMMETRIC; engine applies asymmetry)
 
 Where τ replaces the original AS (T − t) so dynamics are stationary —
 this is the variant the spec locked in.
+
+Two operator-level extensions to the canonical formula:
+
+- ``q_target`` lets the operator pre-bias the quoter toward a non-zero
+  inventory target (e.g. expecting persistent buy-side pressure → set
+  q_target negative so the quoter pre-skews short). Applied directly in
+  the reservation-price calculation here.
+- ``bid_widening_factor`` / ``ask_widening_factor`` are multiplicative
+  per-side spread asymmetries. They are STORED on the quoter for the
+  engine's convenience but NOT applied in ``quote()`` — instead the
+  engine applies them as the final transformation in
+  ``Engine._refresh_quotes`` after running the intervention pipeline
+  (adaptive_spread, per_cp_penalty). This keeps the asymmetry composable
+  with vol-driven and CP-driven widenings.
 """
 
 from __future__ import annotations
@@ -34,6 +48,9 @@ class AvellanedaStoikov:
         tau: float,
         spread_min: float,
         spread_max: float,
+        q_target: float = 0.0,
+        bid_widening_factor: float = 1.0,
+        ask_widening_factor: float = 1.0,
     ) -> None:
         if gamma <= 0:
             raise ValueError("gamma must be > 0")
@@ -46,11 +63,15 @@ class AvellanedaStoikov:
         self.tau = tau
         self.spread_min = spread_min
         self.spread_max = spread_max
+        self.q_target = q_target
+        self.bid_widening_factor = bid_widening_factor
+        self.ask_widening_factor = ask_widening_factor
 
     def quote(self, mid: float, inventory: float, sigma: float) -> Quote:
         sigma2 = sigma * sigma
-        # Inventory-shaded reservation price
-        reservation = mid - inventory * self.gamma * sigma2 * self.tau
+        # Inventory-shaded reservation price (relative to q_target)
+        effective_inv = inventory - self.q_target
+        reservation = mid - effective_inv * self.gamma * sigma2 * self.tau
         # AS half-spread
         inv_risk_term = (self.gamma * sigma2 * self.tau) / 2.0
         # Guard ln(1+x) when gamma/k is very small or large; both finite for sane inputs
@@ -61,6 +82,8 @@ class AvellanedaStoikov:
         min_half = 0.5 * self.spread_min * mid
         max_half = 0.5 * self.spread_max * mid
         half_spread = max(min_half, min(max_half, half_spread))
+        # Symmetric quote. Engine applies bid/ask widening factors after
+        # the intervention pipeline (see Engine._refresh_quotes).
         return Quote(
             bid_price=reservation - half_spread,
             ask_price=reservation + half_spread,

@@ -98,8 +98,39 @@ class Session:
             elif field_name == "tau":
                 self.engine.quoter.tau = float(value)
             elif field_name == "inventory_limit":
-                self.engine.quoter.inventory_limit = float(value)
+                # The quoter doesn't actually carry inventory_limit (it's used by
+                # the InterventionContext for kill_switch/hedge thresholds), but
+                # set it on cfg for state-payload symmetry.
+                self.engine.cfg.quoter.inventory_limit = float(value)
                 self.engine.intervention_ctx.inventory_limit = float(value)
+            elif field_name == "q_target":
+                # Clamp to [-inventory_limit, +inventory_limit]
+                limit = self.engine.intervention_ctx.inventory_limit
+                self.engine.quoter.q_target = max(-limit, min(limit, float(value)))
+            elif field_name == "bid_widening_factor":
+                self.engine.quoter.bid_widening_factor = max(0.01, float(value))
+            elif field_name == "ask_widening_factor":
+                self.engine.quoter.ask_widening_factor = max(0.01, float(value))
+
+    def update_intervention_params(self, patch: dict[str, Any]) -> None:
+        """Patch numeric intervention thresholds (the percentage knobs).
+
+        The binary on/off flags are still managed via update_interventions().
+        """
+        if not self.engine:
+            return
+        cfg = self.engine.intervention_ctx.cfg
+        for field_name, value in patch.items():
+            if field_name == "kill_switch_inventory_pct":
+                cfg.kill_switch_inventory_pct = max(0.0, min(1.0, float(value)))
+            elif field_name == "hedge_threshold_pct":
+                cfg.hedge_threshold_pct = max(0.0, min(1.0, float(value)))
+            elif field_name == "adaptive_spread_mult_per_vol":
+                cfg.adaptive_spread_mult_per_vol = max(0.0, float(value))
+            elif field_name == "news_detector_jump_bps":
+                cfg.news_detector_jump_bps = max(0.0, float(value))
+            elif field_name == "cp_penalty_decay_halflife_s":
+                cfg.cp_penalty_decay_halflife_s = max(1.0, float(value))
 
     def update_interventions(self, name: str, enabled: bool) -> None:
         if not self.engine:

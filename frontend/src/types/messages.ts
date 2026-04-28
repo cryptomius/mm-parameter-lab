@@ -47,8 +47,20 @@ export interface SessionState {
   running: boolean; paused?: boolean; experiment_id?: string;
   sim_t?: number; inventory?: number;
   total_pnl?: number; spread_pnl?: number; inventory_pnl?: number;
-  sigma_est?: number; gamma?: number; k?: number; tau?: number;
+  sigma_est?: number;
+  gamma?: number; k?: number; tau?: number;
+  q_target?: number;
+  bid_widening_factor?: number;
+  ask_widening_factor?: number;
+  inventory_limit?: number;
   interventions?: Record<string, boolean>;
+  intervention_params?: {
+    kill_switch_inventory_pct?: number;
+    hedge_threshold_pct?: number;
+    adaptive_spread_mult_per_vol?: number;
+    news_detector_jump_bps?: number;
+    cp_penalty_decay_halflife_s?: number;
+  };
 }
 
 export interface Experiment { id: string; finding: number; description: string; }

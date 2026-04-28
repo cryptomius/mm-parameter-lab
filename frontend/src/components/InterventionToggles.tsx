@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { api } from "../api/rest";
+import { CUSTOM_REGIME_KEY } from "../state/regimes";
 import { useSessionStore } from "../state/sessionStore";
 
 const NAMES: { name: string; label: string; tooltip: string }[] = [
@@ -39,6 +40,7 @@ export function InterventionToggles() {
   const intr = useSessionStore((s) => s.state.interventions ?? {});
   const patchLocal = useSessionStore((s) => s.patchInterventionLocal);
   const setState = useSessionStore((s) => s.setState);
+  const setRegime = useSessionStore((s) => s.setRegime);
   const running = useSessionStore((s) => s.state.running);
   const [hovered, setHovered] = useState<string | null>(null);
   const info = NAMES.find((n) => n.name === hovered);
@@ -59,6 +61,7 @@ export function InterventionToggles() {
             disabled={!running}
             onChange={async (e) => {
               const next = e.target.checked;
+              setRegime(CUSTOM_REGIME_KEY);
               patchLocal(it.name, next);
               try {
                 await api.patchIntervention(it.name, next);
